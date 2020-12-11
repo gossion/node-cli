@@ -31,6 +31,11 @@ import (
 	"github.com/virtual-kubelet/node-cli/provider"
 	"github.com/virtual-kubelet/virtual-kubelet/log"
 	"github.com/virtual-kubelet/virtual-kubelet/node/api"
+	v1 "k8s.io/api/core/v1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"k8s.io/kubernetes/pkg/kubelet/server"
 )
 
 // AcceptedCiphers is the list of accepted TLS ciphers, with known weak ciphers elided
@@ -83,7 +88,7 @@ func loadTLSConfig(certPath, keyPath, caPath string, allowUnauthenticatedClients
 	}, nil
 }
 
-func setupHTTPServer(ctx context.Context, p provider.Provider, cfg *apiServerConfig) (_ func(), retErr error) {
+func setupHTTPServer(ctx context.Context, p provider.Provider, cfg *apiServerConfig /*, client kubernetes.Interface*/) (_ func(), retErr error) { //TODO: still need cfg?
 	var closers []io.Closer
 	cancel := func() {
 		for _, c := range closers {
@@ -125,6 +130,40 @@ func setupHTTPServer(ctx context.Context, p provider.Provider, cfg *apiServerCon
 		if mp, ok := p.(provider.PodMetricsProvider); ok {
 			podRoutes.GetStatsSummary = mp.GetStatsSummary
 		}
+
+		if cfg.Auth != nil {
+			//m := NewKubeletKubeletAuthMiddleware(cfg.Auth)
+			//podRoutes.Middleware = [m]
+		}
+
+		// func auth(f http.HandlerFunc) http.HandlerFunc {
+		// 	return func(w http.ResponseWriter, r *http.Request) {
+		// 		if r.Method != "GET" {
+		// 			http.NotFound(w, r)
+		// 			return
+		// 		}
+		// 		f(w, r)
+		// 	}
+		// }
+
+		// authFunc := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 	if r.Method != "GET" {
+		// 		http.NotFound(w, r)
+		// 		return
+		// 	}
+		// 	f(w, r)
+		// })
+
+		// authFilter := http.HandlerFunc(func(f http.HandlerFunc) http.HandlerFunc {
+		// 	return func(w http.ResponseWriter, r *http.Request) {
+		// 		if r.Method != "GET" {
+		// 			http.NotFound(w, r)
+		// 			return
+		// 		}
+		// 		f(w, r)
+		// 	}
+		// })
+
 		api.AttachPodRoutes(podRoutes, mux, true)
 
 		s := &http.Server{
@@ -180,6 +219,91 @@ type apiServerConfig struct {
 	StreamIdleTimeout           time.Duration
 	StreamCreationTimeout       time.Duration
 	AllowUnauthenticatedClients bool
+
+	Auth server.AuthInterface
+}
+
+type authConfig struct {
+	// authentication specifies how requests to the Kubelet's server are authenticated
+	Authentication KubeletAuthentication
+	// authorization specifies how requests to the Kubelet's server are authorized
+	Authorization KubeletAuthorization
+}
+
+// KubeletAuthorizationMode denotes the authorization mode for the kubelet
+type KubeletAuthorizationMode string
+
+const (
+	// KubeletAuthorizationModeAlwaysAllow authorizes all authenticated requests
+	KubeletAuthorizationModeAlwaysAllow KubeletAuthorizationMode = "AlwaysAllow"
+	// KubeletAuthorizationModeWebhook uses the SubjectAccessReview API to determine authorization
+	KubeletAuthorizationModeWebhook KubeletAuthorizationMode = "Webhook"
+)
+
+// KubeletAuthorization holds the state related to the authorization in the kublet.
+type KubeletAuthorization struct {
+	// mode is the authorization mode to apply to requests to the kubelet server.
+	// Valid values are AlwaysAllow and Webhook.
+	// Webhook mode uses the SubjectAccessReview API to determine authorization.
+	Mode KubeletAuthorizationMode
+
+	// webhook contains settings related to Webhook authorization.
+	Webhook KubeletWebhookAuthorization
+}
+
+// KubeletWebhookAuthorization holds the state related to the Webhook
+// Authorization in the Kubelet.
+type KubeletWebhookAuthorization struct {
+	// cacheAuthorizedTTL is the duration to cache 'authorized' responses from the webhook authorizer.
+	CacheAuthorizedTTL metav1.Duration
+	// cacheUnauthorizedTTL is the duration to cache 'unauthorized' responses from the webhook authorizer.
+	CacheUnauthorizedTTL metav1.Duration
+}
+
+// KubeletAuthentication holds the Kubetlet Authentication setttings.
+type KubeletAuthentication struct {
+	// x509 contains settings related to x509 client certificate authentication
+	X509 KubeletX509Authentication
+	// webhook contains settings related to webhook bearer token authentication
+	Webhook KubeletWebhookAuthentication
+	// anonymous contains settings related to anonymous authentication
+	Anonymous KubeletAnonymousAuthentication
+}
+
+// KubeletX509Authentication contains settings related to x509 client certificate authentication
+type KubeletX509Authentication struct {
+	// clientCAFile is the path to a PEM-encoded certificate bundle. If set, any request presenting a client certificate
+	// signed by one of the authorities in the bundle is authenticated with a username corresponding to the CommonName,
+	// and groups corresponding to the Organization in the client certificate.
+	ClientCAFile string
+}
+
+// KubeletWebhookAuthentication contains settings related to webhook authentication
+type KubeletWebhookAuthentication struct {
+	// enabled allows bearer token authentication backed by the tokenreviews.authentication.k8s.io API
+	Enabled bool
+	// cacheTTL enables caching of authentication results
+	CacheTTL metav1.Duration
+}
+
+// KubeletAnonymousAuthentication enables anonymous requests to the kubetlet server.
+type KubeletAnonymousAuthentication struct {
+	// enabled allows anonymous requests to the kubelet server.
+	// Requests that are not rejected by another authentication method are treated as anonymous requests.
+	// Anonymous requests have a username of system:anonymous, and a group name of system:unauthenticated.
+	Enabled bool
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// SerializedNodeConfigSource allows us to serialize NodeConfigSource
+// This type is used internally by the Kubelet for tracking checkpointed dynamic configs.
+// It exists in the kubeletconfig API group because it is classified as a versioned input to the Kubelet.
+type SerializedNodeConfigSource struct {
+	metav1.TypeMeta
+	// Source is the source that we are serializing
+	// +optional
+	Source v1.NodeConfigSource
 }
 
 func getAPIConfig(c *opts.Opts) (*apiServerConfig, error) {

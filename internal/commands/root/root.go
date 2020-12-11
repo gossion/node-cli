@@ -40,6 +40,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/record"
+
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // NewCommand creates a new top-level command.
@@ -126,6 +128,9 @@ func runRootCommandWithProviderAndClient(ctx context.Context, pInit provider.Ini
 	if err != nil {
 		return err
 	}
+
+	auth, _ /*?*/, err := BuildAuth(types.NodeName(c.NodeName), client, *c)
+	apiConfig.Auth = auth
 
 	initConfig := provider.InitConfig{
 		ConfigPath:        c.ProviderConfigPath,
