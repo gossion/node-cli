@@ -40,6 +40,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/record"
+	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -58,8 +59,24 @@ This allows users to schedule kubernetes workloads on nodes that aren't running 
 		},
 	}
 
+	applyLegacyDefaults(o)
+
 	installFlags(cmd.Flags(), o)
 	return cmd
+}
+
+// applyLegacyDefaults applies legacy default values to the KubeletConfiguration in order to
+// preserve the command line API. This is used to construct the baseline default KubeletConfiguration
+// before the first round of flag parsing.
+func applyLegacyDefaults(o *opts.Opts) {
+	// --anonymous-auth
+	o.Authentication.Anonymous.Enabled = true
+	// --authentication-token-webhook
+	o.Authentication.Webhook.Enabled = false
+	// --authorization-mode
+	o.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
+	// --read-only-port
+	//kc.ReadOnlyPort = ports.KubeletReadOnlyPort
 }
 
 func runRootCommand(ctx context.Context, s *provider.Store, c *opts.Opts) error {
