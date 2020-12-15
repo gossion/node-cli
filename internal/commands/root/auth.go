@@ -145,7 +145,7 @@ type KubeletAuthMiddleware struct {
 }
 
 func NewKubeletKubeletAuthMiddleware(auth AuthInterface, ctx context.Context) AuthMiddleware {
-	return KubeletAuthMiddleware{auth: auth}
+	return KubeletAuthMiddleware{auth: auth, ctx: ctx}
 }
 
 func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
