@@ -24,6 +24,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -52,8 +53,9 @@ var AcceptedCiphers = []uint16{
 	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 }
 
-func loadTLSConfig(certPath, keyPath, caPath string, allowUnauthenticatedClients bool) (*tls.Config, error) {
+func loadTLSConfig(ctx context.Context, certPath, keyPath, caPath string, allowUnauthenticatedClients bool) (*tls.Config, error) {
 	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	log.G(ctx).WithField("caPath", caPath).WithField("allowUnauthenticatedClients", allowUnauthenticatedClients).Info("loadTLSConfig")
 	if err != nil {
 		return nil, errors.Wrap(err, "error loading tls certs")
 	}
@@ -108,7 +110,7 @@ func setupHTTPServer(ctx context.Context, p provider.Provider, cfg *apiServerCon
 			WithField("caPath", cfg.CACertPath).
 			Error("TLS certificates not provided, not setting up pod http server")
 	} else {
-		tlsCfg, err := loadTLSConfig(cfg.CertPath, cfg.KeyPath, cfg.CACertPath, cfg.AllowUnauthenticatedClients)
+		tlsCfg, err := loadTLSConfig(ctx, cfg.CertPath, cfg.KeyPath, cfg.CACertPath, cfg.AllowUnauthenticatedClients)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +133,7 @@ func setupHTTPServer(ctx context.Context, p provider.Provider, cfg *apiServerCon
 			podRoutes.GetStatsSummary = mp.GetStatsSummary
 		}
 
-		if cfg.Auth != nil {
+		if cfg.Auth != nil && cfg.EnableTokenAuth {
 			m := NewKubeletKubeletAuthMiddleware(cfg.Auth, ctx)
 			podRoutes.HandlerMiddleware = []api.Middleware{m.AuthFilter}
 		}
@@ -220,7 +222,8 @@ type apiServerConfig struct {
 	StreamCreationTimeout       time.Duration
 	AllowUnauthenticatedClients bool
 
-	Auth server.AuthInterface
+	Auth            server.AuthInterface
+	EnableTokenAuth bool
 }
 
 type authConfig struct {
@@ -310,6 +313,12 @@ func getAPIConfig(c *opts.Opts) (*apiServerConfig, error) {
 	config := apiServerConfig{
 		CertPath: os.Getenv("APISERVER_CERT_LOCATION"),
 		KeyPath:  os.Getenv("APISERVER_KEY_LOCATION"),
+	}
+
+	//For testing...
+	EnableTokenAuth := os.Getenv("EnableTokenAuth")
+	if strings.EqualFold(EnableTokenAuth, "true") {
+		config.EnableTokenAuth = true
 	}
 
 	config.Addr = fmt.Sprintf(":%d", c.ListenPort)
