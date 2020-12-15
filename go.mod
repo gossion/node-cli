@@ -21,7 +21,7 @@ require (
 	k8s.io/kubernetes v1.18.4
 )
 
-replace github.com/virtual-kubelet/virtual-kubelet => github.com/gossion/virtual-kubelet v1.3.1-0.20201212033543-084516b862a7 // /Users/guwe/go/src/github.com/virtual-kubelet/virtual-kubelet
+replace github.com/virtual-kubelet/virtual-kubelet => github.com/gossion/virtual-kubelet v1.3.1-0.20201215123258-68501324412a // /Users/guwe/go/src/github.com/virtual-kubelet/virtual-kubelet
 
 replace k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.18.4
 
