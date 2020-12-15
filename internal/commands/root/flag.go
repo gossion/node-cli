@@ -92,6 +92,47 @@ func installFlags(flags *pflag.FlagSet, c *opts.Opts) {
 	//--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256
 	//--tls-private-key-file=/etc/kubernetes/certs/kubeletserver.key
 
+	//virtual-kubelet
+	// - args:
+	// - --provider
+	// - azure
+	// - --nodename
+	// - virtual-node-aci-linux
+	// - --os
+	// - Linux
+	// command:
+	// - virtual-kubelet
+	// env:
+	// - name: KUBELET_PORT
+	//   value: "10250"
+	// - name: ACS_CREDENTIAL_LOCATION
+	//   value: /etc/acs/azure.json
+	// - name: AZURE_CLIENT_SECRET
+	//   valueFrom:
+	// 	secretKeyRef:
+	// 	  key: clientSecret
+	// 	  name: aci-connector-linux
+	// - name: APISERVER_CERT_LOCATION
+	//   value: /etc/virtual-kubelet/cert.pem
+	// - name: APISERVER_KEY_LOCATION
+	//   value: /etc/virtual-kubelet/key.pem
+	// - name: VKUBELET_POD_IP
+	//   valueFrom:
+	// 	fieldRef:
+	// 	  apiVersion: v1
+	// 	  fieldPath: status.podIP
+	// - name: ACI_EXTRA_USER_AGENT
+	//   value: add-on/aks
+	// - name: ACI_SUBNET_NAME
+	//   value: aci
+	// - name: MASTER_URI
+	//   value: https://guweaci-e3223ab4.hcp.guweebld37637780.e2e.azmk8s.io
+	// - name: CLUSTER_CIDR
+	//   value: 10.1.0.0/24
+	// - name: KUBE_DNS_IP
+	//   value: 10.0.0.10
+	// - name: VIRTUALNODE_USER_IDENTITY_CLIENTID
+
 	// Authentication
 	flags.BoolVar(&c.Authentication.Anonymous.Enabled, "anonymous-auth", c.Authentication.Anonymous.Enabled, ""+
 		"Enables anonymous requests to the Kubelet server. Requests that are not rejected by another "+

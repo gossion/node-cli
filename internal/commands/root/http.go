@@ -132,7 +132,7 @@ func setupHTTPServer(ctx context.Context, p provider.Provider, cfg *apiServerCon
 		}
 
 		if cfg.Auth != nil {
-			m := NewKubeletKubeletAuthMiddleware(cfg.Auth)
+			m := NewKubeletKubeletAuthMiddleware(cfg.Auth, ctx)
 			podRoutes.HandlerMiddleware = []api.Middleware{m.AuthFilter}
 		}
 

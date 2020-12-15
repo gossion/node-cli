@@ -1,6 +1,7 @@
 package root
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -18,6 +19,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/server"
 
 	"github.com/virtual-kubelet/node-cli/opts"
+	"github.com/virtual-kubelet/virtual-kubelet/log"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 
 	"net/http"
@@ -139,9 +141,10 @@ type AuthMiddleware interface {
 
 type KubeletAuthMiddleware struct {
 	auth AuthInterface
+	ctx  context.Context
 }
 
-func NewKubeletKubeletAuthMiddleware(auth AuthInterface) AuthMiddleware {
+func NewKubeletKubeletAuthMiddleware(auth AuthInterface, ctx context.Context) AuthMiddleware {
 	return KubeletAuthMiddleware{auth: auth}
 }
 
@@ -149,6 +152,9 @@ func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 
 		info, ok, err := m.auth.AuthenticateRequest(req)
+		log.G(m.ctx).
+			WithField("info", info).
+			WithField("ok", ok).WithField("err", err).Infof("AuthenticateRequest %v", req)
 
 		//log.SetOutput(os.Stdout) // logs go to Stderr by default
 		//log.Println(r.Method, r.URL)
@@ -161,14 +167,19 @@ func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 		}
 		if !ok {
 			//resp.WriteErrorString(http.StatusUnauthorized, "Unauthorized")
+			resp.Write([]byte("Unauthorized"))
+			resp.WriteHeader(http.StatusUnauthorized)
+
 			return
 		}
 
 		// Get authorization attributes
 		attrs := m.auth.GetRequestAttributes(info.User, req)
+		log.G(m.ctx).WithField("attrs", attrs).Info("GetReqeuestAttributes")
 
 		// Authorize
-		decision, _, err := m.auth.Authorize(req.Context(), attrs)
+		decision, reason, err := m.auth.Authorize(req.Context(), attrs)
+		log.G(m.ctx).WithField("decision", decision).WithField("reason", reason).WithField("err", err).Info("Authorize")
 		if err != nil {
 			msg := fmt.Sprintf("Authorization error (user=%s, verb=%s, resource=%s, subresource=%s)", attrs.GetUser().GetName(), attrs.GetVerb(), attrs.GetResource(), attrs.GetSubresource())
 			//klog.Errorf(msg, err)
