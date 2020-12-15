@@ -348,6 +348,8 @@ github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gossion/virtual-kubelet v1.3.1-0.20201215123258-68501324412a h1:zpgoImljzbfNECXtJI6EHGUK42bn/CUQrdDQGbIvh+8=
 github.com/gossion/virtual-kubelet v1.3.1-0.20201215123258-68501324412a/go.mod h1:LveCQg4vU7epXGEubixofV/zG+k5QeOxadyUl7Tkp38=
+github.com/gossion/virtual-kubelet v1.3.1-0.20201215133738-0c800d2475b1 h1:tN8G0asPXQl2lFqBqYTtotpuqsmf7zVuevtF6z6w92g=
+github.com/gossion/virtual-kubelet v1.3.1-0.20201215133738-0c800d2475b1/go.mod h1:LveCQg4vU7epXGEubixofV/zG+k5QeOxadyUl7Tkp38=
 github.com/gostaticanalysis/analysisutil v0.0.0-20190318220348-4088753ea4d3/go.mod h1:eEOZF4jCKGi+aprrirO9e7WKB3beBRtWgqGunKl6pKE=
 github.com/gostaticanalysis/analysisutil v0.0.3/go.mod h1:eEOZF4jCKGi+aprrirO9e7WKB3beBRtWgqGunKl6pKE=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 h1:pdN6V1QBWetyv/0+wjACpqVH+eVULgEjkurDLq3goeM=
