@@ -194,9 +194,13 @@ func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 			WithField("info", info).
 			WithField("ok", ok).WithField("err", err).Infof("AuthenticateRequest %v", req)
 
+		log.G(m.ctx).Info("1")
+		log.G(m.ctx).Info("2")
+
 		//log.SetOutput(os.Stdout) // logs go to Stderr by default
 		//log.Println(r.Method, r.URL)
 		if err != nil {
+			log.G(m.ctx).Info("3")
 			//klog.Errorf("Unable to authenticate the request due to an error: %v", err)
 			resp.Write([]byte("Unauthorized"))
 			resp.WriteHeader(http.StatusUnauthorized)
@@ -204,21 +208,25 @@ func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if !ok {
+			log.G(m.ctx).Info("4")
 			//resp.WriteErrorString(http.StatusUnauthorized, "Unauthorized")
 			resp.Write([]byte("Unauthorized"))
 			resp.WriteHeader(http.StatusUnauthorized)
 
 			return
 		}
+		log.G(m.ctx).Info("5")
 
 		// Get authorization attributes
 		attrs := m.auth.GetRequestAttributes(info.User, req)
+		log.G(m.ctx).Info("6")
 		log.G(m.ctx).WithField("attrs", attrs).Info("GetReqeuestAttributes")
 
 		// Authorize
 		decision, reason, err := m.auth.Authorize(req.Context(), attrs)
 		log.G(m.ctx).WithField("decision", decision).WithField("reason", reason).WithField("err", err).Info("Authorize")
 		if err != nil {
+			log.G(m.ctx).Info("7")
 			msg := fmt.Sprintf("Authorization error (user=%s, verb=%s, resource=%s, subresource=%s)", attrs.GetUser().GetName(), attrs.GetVerb(), attrs.GetResource(), attrs.GetSubresource())
 			//klog.Errorf(msg, err)
 			//resp.WriteErrorString(http.StatusInternalServerError, msg)
@@ -226,7 +234,9 @@ func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 			resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		log.G(m.ctx).Info("8")
 		if decision != authorizer.DecisionAllow {
+			log.G(m.ctx).Info("9")
 			msg := fmt.Sprintf("Forbidden (user=%s, verb=%s, resource=%s, subresource=%s)", attrs.GetUser().GetName(), attrs.GetVerb(), attrs.GetResource(), attrs.GetSubresource())
 			//klog.V(2).Info(msg)
 			//resp.WriteErrorString(http.StatusForbidden, msg)
@@ -235,7 +245,7 @@ func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		log.G(m.ctx).Info("Goahead")
+		log.G(m.ctx).Info("10")
 		h(resp, req)
 	})
 }
