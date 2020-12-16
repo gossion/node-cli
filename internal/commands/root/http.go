@@ -127,6 +127,7 @@ func setupHTTPServer(ctx context.Context, p provider.Provider, cfg *apiServerCon
 			GetPods:               p.GetPods,
 			StreamIdleTimeout:     cfg.StreamIdleTimeout,
 			StreamCreationTimeout: cfg.StreamCreationTimeout,
+			Auth:                  NewKubeletKubeletAuthMiddleware(cfg.Auth, ctx),
 		}
 
 		if mp, ok := p.(provider.PodMetricsProvider); ok {
