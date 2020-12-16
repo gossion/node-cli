@@ -203,16 +203,16 @@ func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 		if err != nil {
 			log.G(m.ctx).Info("3")
 			//klog.Errorf("Unable to authenticate the request due to an error: %v", err)
-			resp.Write([]byte("Unauthorized"))
 			resp.WriteHeader(http.StatusUnauthorized)
+			resp.Write([]byte("Unauthorized"))
 
 			return
 		}
 		if !ok {
 			log.G(m.ctx).Info("4")
 			//resp.WriteErrorString(http.StatusUnauthorized, "Unauthorized")
-			resp.Write([]byte("Unauthorized"))
 			resp.WriteHeader(http.StatusUnauthorized)
+			resp.Write([]byte("Unauthorized"))
 
 			return
 		}
@@ -231,8 +231,8 @@ func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 			msg := fmt.Sprintf("Authorization error (user=%s, verb=%s, resource=%s, subresource=%s)", attrs.GetUser().GetName(), attrs.GetVerb(), attrs.GetResource(), attrs.GetSubresource())
 			//klog.Errorf(msg, err)
 			//resp.WriteErrorString(http.StatusInternalServerError, msg)
-			resp.Write([]byte(msg))
 			resp.WriteHeader(http.StatusInternalServerError)
+			resp.Write([]byte(msg))
 			return
 		}
 		log.G(m.ctx).Info("8")
@@ -241,8 +241,8 @@ func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 			msg := fmt.Sprintf("Forbidden (user=%s, verb=%s, resource=%s, subresource=%s)", attrs.GetUser().GetName(), attrs.GetVerb(), attrs.GetResource(), attrs.GetSubresource())
 			//klog.V(2).Info(msg)
 			//resp.WriteErrorString(http.StatusForbidden, msg)
-			resp.Write([]byte(msg))
 			resp.WriteHeader(http.StatusForbidden)
+			resp.Write([]byte(msg))
 			return
 		}
 
