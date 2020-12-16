@@ -22,8 +22,6 @@ import (
 	"github.com/virtual-kubelet/virtual-kubelet/log"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
 
-	"github.com/virtual-kubelet/virtual-kubelet/node/api"
-
 	"net/http"
 )
 
@@ -132,9 +130,8 @@ type KubeletAuth struct {
 	authorizer.Authorizer
 }
 
-// NewKubeletAuth returns a kubelet.AuthInterface composed of the given authenticator, attribute getter, and authorizer
-func NewKubeletAuth(authenticator authenticator.Request, authorizerAttributeGetter authorizer.RequestAttributesGetter, authorizer authorizer.Authorizer) *KubeletAuth { //?interface?
-	return &KubeletAuth{authenticator, authorizerAttributeGetter, authorizer}
+type AuthMiddleware interface {
+	AuthFilter(h http.HandlerFunc) http.HandlerFunc
 }
 
 type KubeletAuthMiddleware struct {
@@ -142,48 +139,13 @@ type KubeletAuthMiddleware struct {
 	ctx  context.Context
 }
 
-func NewKubeletKubeletAuthMiddleware(auth AuthInterface, ctx context.Context) api.AuthMiddleware {
-	return KubeletAuthMiddleware{auth: auth, ctx: ctx}
+// NewKubeletAuth returns a kubelet.AuthInterface composed of the given authenticator, attribute getter, and authorizer
+func NewKubeletAuth(authenticator authenticator.Request, authorizerAttributeGetter authorizer.RequestAttributesGetter, authorizer authorizer.Authorizer) *KubeletAuth { //?interface?
+	return &KubeletAuth{authenticator, authorizerAttributeGetter, authorizer}
 }
 
-func (m KubeletAuthMiddleware) ValidateRequet(req *http.Request) (string, int) {
-	info, ok, err := m.auth.AuthenticateRequest(req)
-	log.G(m.ctx).
-		WithField("info", info).
-		WithField("ok", ok).WithField("err", err).Infof("AuthenticateRequest %v", req)
-
-	//log.SetOutput(os.Stdout) // logs go to Stderr by default
-	//log.Println(r.Method, r.URL)
-	if err != nil {
-		//klog.Errorf("Unable to authenticate the request due to an error: %v", err)
-		return "Unauthorized", http.StatusUnauthorized
-	}
-	if !ok {
-		//resp.WriteErrorString(http.StatusUnauthorized, "Unauthorized")
-		return "Unauthorized", http.StatusUnauthorized
-	}
-
-	// Get authorization attributes
-	attrs := m.auth.GetRequestAttributes(info.User, req)
-	log.G(m.ctx).WithField("attrs", attrs).Info("GetReqeuestAttributes")
-
-	// Authorize
-	decision, reason, err := m.auth.Authorize(req.Context(), attrs)
-	log.G(m.ctx).WithField("decision", decision).WithField("reason", reason).WithField("err", err).Info("Authorize")
-	if err != nil {
-		msg := fmt.Sprintf("Authorization error (user=%s, verb=%s, resource=%s, subresource=%s)", attrs.GetUser().GetName(), attrs.GetVerb(), attrs.GetResource(), attrs.GetSubresource())
-		//klog.Errorf(msg, err)
-		//resp.WriteErrorString(http.StatusInternalServerError, msg)
-		return msg, http.StatusInternalServerError
-	}
-	if decision != authorizer.DecisionAllow {
-		msg := fmt.Sprintf("Forbidden (user=%s, verb=%s, resource=%s, subresource=%s)", attrs.GetUser().GetName(), attrs.GetVerb(), attrs.GetResource(), attrs.GetSubresource())
-		//klog.V(2).Info(msg)
-		//resp.WriteErrorString(http.StatusForbidden, msg)
-		return msg, http.StatusForbidden
-	}
-
-	return "", http.StatusOK
+func NewKubeletKubeletAuthMiddleware(auth AuthInterface, ctx context.Context) AuthMiddleware {
+	return KubeletAuthMiddleware{auth: auth, ctx: ctx}
 }
 
 func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {

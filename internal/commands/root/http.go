@@ -127,7 +127,6 @@ func setupHTTPServer(ctx context.Context, p provider.Provider, cfg *apiServerCon
 			GetPods:               p.GetPods,
 			StreamIdleTimeout:     cfg.StreamIdleTimeout,
 			StreamCreationTimeout: cfg.StreamCreationTimeout,
-			Auth:                  NewKubeletKubeletAuthMiddleware(cfg.Auth, ctx),
 		}
 
 		if mp, ok := p.(provider.PodMetricsProvider); ok {
@@ -136,7 +135,7 @@ func setupHTTPServer(ctx context.Context, p provider.Provider, cfg *apiServerCon
 
 		if cfg.Auth != nil && cfg.EnableTokenAuth {
 			m := NewKubeletKubeletAuthMiddleware(cfg.Auth, ctx)
-			podRoutes.HandlerMiddleware = []api.Middleware{m.AuthFilter}
+			podRoutes.Middlewares = []api.Middleware{m.AuthFilter}
 		}
 
 		// func auth(f http.HandlerFunc) http.HandlerFunc {
