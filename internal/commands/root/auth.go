@@ -235,9 +235,8 @@ func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		h.ServeHTTP(resp, req) // call ServeHTTP on the original handler
-		log.G(m.ctx).Infof("response: %s", resp)
-
+		log.G(m.ctx).Info("Goahead")
+		h(resp, req)
 	})
 }
 
