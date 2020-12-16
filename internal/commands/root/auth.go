@@ -189,6 +189,7 @@ func (m KubeletAuthMiddleware) ValidateRequet(req *http.Request) (string, int) {
 func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 
+		log.G(m.ctx).Info("0")
 		info, ok, err := m.auth.AuthenticateRequest(req)
 		log.G(m.ctx).
 			WithField("info", info).
