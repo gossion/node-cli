@@ -30,6 +30,7 @@ func NewKubeletKubeletAuthMiddleware(ctx context.Context, auth kubeletserver.Aut
 func (m KubeletAuthMiddleware) AuthFilter(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		info, ok, err := m.auth.AuthenticateRequest(req)
+		log.G(m.ctx).Infof("AuthFilter, info: %s, ok: %t, err: %s", info, ok, err)
 		if err != nil {
 			log.G(m.ctx).Infof("Unauthorized, err: %s", err)
 			resp.WriteHeader(http.StatusUnauthorized)
