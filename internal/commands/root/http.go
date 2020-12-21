@@ -58,7 +58,7 @@ func loadTLSConfig(ctx context.Context, certPath, keyPath, caPath string, allowU
 
 	var (
 		caPool     *x509.CertPool
-		clientAuth = tls.RequireAndVerifyClientCert
+		clientAuth = tls.RequestClientCert
 	)
 
 	if allowUnauthenticatedClients {
