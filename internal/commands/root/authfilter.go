@@ -23,24 +23,24 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
-// AuthMiddleware contains all methods required by the auth filters
-type AuthMiddleware interface {
-	AuthFilter(h http.Handler) http.Handler
+// AuthFilter contains all methods required by the auth filters
+type AuthFilter interface {
+	AuthHandler(h http.Handler) http.Handler
 }
 
-// VirtualKubeletAuthMiddleware is the struct to implement middleware
-type VirtualKubeletAuthMiddleware struct {
+// VirtualKubeletAuthFilter is the struct to implement AuthFilter
+type VirtualKubeletAuthFilter struct {
 	auth AuthInterface
 	ctx  context.Context
 }
 
-// NewVirtualKubeletAuthMiddleware initiate an instance for AuthMiddleware
-func NewVirtualKubeletAuthMiddleware(ctx context.Context, auth AuthInterface) AuthMiddleware {
-	return VirtualKubeletAuthMiddleware{auth: auth, ctx: ctx}
+// NewVirtualKubeletAuthFilter initiate an instance for AuthFilter
+func NewVirtualKubeletAuthFilter(ctx context.Context, auth AuthInterface) AuthFilter {
+	return VirtualKubeletAuthFilter{auth: auth, ctx: ctx}
 }
 
-// AuthFilter is the middleware to authenticate & authorize the request
-func (m VirtualKubeletAuthMiddleware) AuthFilter(h http.Handler) http.Handler {
+// AuthHandler is the hanlder to authenticate & authorize the request
+func (m VirtualKubeletAuthFilter) AuthHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		info, ok, err := m.auth.AuthenticateRequest(req)
 		if err != nil {

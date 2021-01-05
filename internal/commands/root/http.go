@@ -130,8 +130,8 @@ func setupHTTPServer(ctx context.Context, p provider.Provider, cfg *apiServerCon
 		}
 
 		if cfg.AuthWebhookEnabled && cfg.Auth != nil {
-			m := NewVirtualKubeletAuthMiddleware(ctx, cfg.Auth)
-			podRoutes.Middlewares = []api.Middleware{m.AuthFilter}
+			m := NewVirtualKubeletAuthFilter(ctx, cfg.Auth)
+			podRoutes.AuthHandler = m.AuthHandler
 		}
 
 		api.AttachPodRoutes(podRoutes, mux, true)
